@@ -44,11 +44,12 @@ return {
               ["<C-p>"] = { "focus_preview", mode = { "i", "n" } },
               ["h"] = { "focus_list", mode = "n" },
               ["p"] = { "focus_preview", mode = "n" },
+              ["i"] = { "focus_preview", mode = "n" },
               ["k"] = "insert_input",
               ["u"] = false,
               ["e"] = false,
               ["n"] = false,
-              ["i"] = false,
+              -- ["i"] = false,
               ["<A-w>"] = false,
             },
           },
@@ -122,7 +123,7 @@ return {
     },
   },
   {
-    "echasnovski/mini.files",
+    "nvim-mini/mini.files",
     opts = function(_, opts)
       opts.mappings = vim.tbl_deep_extend("force", opts.mappings or {}, {
         go_in = motions.right,
