@@ -2,7 +2,7 @@ local map = vim.keymap.set
 
 require("config.colemak").setup()
 
-map("n", "gb", "<C-o>", { desc = "Jump Back" })
+map("n", "gb", "<C-o>", { desc = "Jump Back A" })
 map("n", "gf", "<C-i>", { desc = "Jump Forward" })
 
 map("n", "sv", "<C-w>t<C-w>H", { desc = "Vertical Split Layout" })
