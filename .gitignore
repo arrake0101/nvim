@@ -5,6 +5,5 @@ debug
 .repro
 foo.*
 *.log
-data
-doc
-doc_2
+datadoc/**
+doc_2/**

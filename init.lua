@@ -1,3 +1,6 @@
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+
 -- bootstrap lazy.nvim, LazyVim and your plugins
 
 if _G.init_debug then
