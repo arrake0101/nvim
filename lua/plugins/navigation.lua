@@ -107,7 +107,6 @@ return {
                   -- ["Q"] = "qflist",
                   ["."] = "toggle_hidden",
                   [","] = "toggle_ignored",
-                  ["<Space>"] = "select_item",
                   ["si"] = "open_right",
                   ["sn"] = "open_left",
                   ["su"] = "open_up",
