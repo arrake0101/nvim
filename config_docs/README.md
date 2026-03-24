@@ -9,13 +9,15 @@
 
 阅读顺序建议：
 
-1. 先读 `config/colemak.md`
-2. 再读 `config/keymaps.md`
-3. 然后读 `plugins/navigation.md`、`plugins/flash.md`、`plugins/lsp.md`
-4. 最后再看 `plugins/dap.md`、`plugins/git.md`、`plugins/ui.md`
+1. 先读 `preferences.md`
+2. 再读 `config/colemak.md`
+3. 然后读 `config/keymaps.md`
+4. 接着读 `plugins/navigation.md`、`plugins/flash.md`、`plugins/lsp.md`
+5. 最后再看 `plugins/dap.md`、`plugins/git.md`、`plugins/ui.md`
 
 文件列表：
 
+- `preferences.md`
 - `config/autocmds.md`
 - `config/colemak.md`
 - `config/keymaps.md`
@@ -29,4 +31,3 @@
 - `plugins/lsp.md`
 - `plugins/navigation.md`
 - `plugins/ui.md`
-
