@@ -5,6 +5,10 @@ return {
     "folke/which-key.nvim",
     opts = function(_, opts)
       opts.preset = "classic"
+      opts.keys = vim.tbl_deep_extend("force", opts.keys or {}, {
+        scroll_down = "<C-e>",
+        scroll_up = "<C-u>",
+      })
     end,
   },
   {
