@@ -29,5 +29,6 @@
 - `plugins/format.md`
 - `plugins/git.md`
 - `plugins/lsp.md`
+- `plugins/markdown.md`
 - `plugins/navigation.md`
 - `plugins/ui.md`
