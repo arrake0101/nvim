@@ -114,5 +114,9 @@ return {
     opts = {
       transparent = false,
     },
+    {
+      "polirritmico/monokai-nightasty.nvim",
+      lazy = false,
+    },
   },
 }

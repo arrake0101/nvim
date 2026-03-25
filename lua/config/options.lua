@@ -11,3 +11,6 @@ vim.opt.softtabstop = 2 -- How many spaces are applied when pressing Ta
 vim.opt.smarttab = true
 vim.opt.smartindent = true
 vim.opt.autoindent = true -- Keep identation from previous line
+
+vim.opt.guicursor =
+  "n-v-c-sm:block-Cursor/lCursor,i-ci-ve:ver25-Cursor/lCursor,r-cr-o:hor20-Cursor/lCursor,t:block-TermCursor"
