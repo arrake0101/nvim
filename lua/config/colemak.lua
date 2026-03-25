@@ -62,7 +62,6 @@ function M.apply_buffer_keys(bufnr, spec)
     end
     vim.keymap.set("n", lhs, rhs, with_desc(desc, {
       buffer = bufnr,
-      remap = true,
       nowait = true,
     }))
   end
