@@ -1,6 +1,7 @@
 -- Core DAP behavior lives here.
 -- Language adapters are configured separately and registered only after nvim-dap loads.
 local adapters = require("plugins.dap.adapters")
+local debug_mode = require("plugins.dap.debug_mode")
 local motions = require("config.colemak").motions
 
 local function get_args(config)
@@ -83,6 +84,7 @@ return {
     },
     keys = vim.list_extend({
       { "<leader>dc", function() require("dap").continue() end, desc = "Run/Continue" },
+      { "<leader>dd", function() debug_mode.enter() end, desc = "Debug Mode" },
       { "<leader>da", function() require("dap").continue({ before = get_args }) end, desc = "Run with Args" },
       { "<leader>dC", function() require("dap").run_to_cursor() end, desc = "Run to Cursor" },
       { "<leader>dg", function() require("dap").goto_() end, desc = "Go to Line (No Execute)" },
@@ -105,6 +107,7 @@ return {
 
       setup_dap_signs()
       setup_vscode_launch_json_support()
+      debug_mode.setup(dap)
 
       -- Each enabled adapter gets one file.
       -- Keeping setup here means the adapters are registered only after nvim-dap itself loads.
