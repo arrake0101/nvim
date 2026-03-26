@@ -68,7 +68,7 @@ local mode_maps = {
     end,
   },
   {
-    lhs = "p",
+    lhs = "q",
     desc = "Debug Breakpoints Picker",
     help = "breakpoints picker",
     rhs = function()

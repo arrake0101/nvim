@@ -1,6 +1,7 @@
 local adapters = {
   -- Enable adapters here one file at a time.
   -- Comment out an entry when you no longer want that adapter or its plugin dependencies.
+  require("plugins.dap.adapters.debugpy"),
   require("plugins.dap.adapters.lua_local"),
   require("plugins.dap.adapters.nlua"),
 }

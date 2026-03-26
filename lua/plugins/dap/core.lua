@@ -2,7 +2,6 @@
 -- Language adapters are configured separately and registered only after nvim-dap loads.
 local adapters = require("plugins.dap.adapters")
 local debug_mode = require("plugins.dap.debug_mode")
-local motions = require("config.colemak").motions
 
 local function get_args(config)
   local args = type(config.args) == "function" and (config.args() or {}) or config.args or {}
@@ -171,6 +170,7 @@ return {
         "<leader>dx",
         function()
           require("dap").terminate()
+          require("dapui").close({})
         end,
         desc = "Terminate",
       },
@@ -178,6 +178,14 @@ return {
         "<leader>dw",
         function()
           require("dap.ui.widgets").hover()
+        end,
+        desc = "Widgets",
+      },
+      {
+        "<leader>dq",
+        function()
+          local breakpoint_actions = require("plugins.dap.breakpoint_actions")
+          breakpoint_actions.open_picker()
         end,
         desc = "Widgets",
       },
