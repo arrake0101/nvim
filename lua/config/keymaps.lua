@@ -8,6 +8,7 @@ map("n", "ti", "<C-i>", { desc = "Jump Forward" })
 map("n", "tu", "<Cmd>BufferLineCyclePrev<CR>", { desc = "buffer prev" })
 map("n", "te", "<Cmd>BufferLineCycleNext<CR>", { desc = "buffer next" })
 map("n", "th", "<Cmd>BufferLinePick<CR>", { desc = "pick buffer" })
+map("n", "tc", "<cmd>bd<CR>", { desc = "Close Buffer" })
 
 map("n", "sv", "<C-w>t<C-w>H", { desc = "Vertical Split Layout" })
 map("n", "sh", "<C-w>t<C-w>K", { desc = "Horizontal Split Layout" })
@@ -15,6 +16,8 @@ map("n", "sh", "<C-w>t<C-w>K", { desc = "Horizontal Split Layout" })
 map("n", "<leader><CR>", "<cmd>nohlsearch<CR>", { desc = "Clear Search Highlight" })
 map("n", "=", "nzz", { desc = "Next Search Result" })
 map("n", "-", "Nzz", { desc = "Prev Search Result" })
+
+map({ "n", "i", "v" }, "qw", "<cmd>w<cr>", { desc = "Save File" })
 
 map("n", "k", "i", { desc = "Insert Mode" })
 map("n", "K", "I", { desc = "Insert at Line Start" })

@@ -83,7 +83,7 @@ return {
     },
     keys = vim.list_extend({
       {
-        "<leader>dr",
+        "<leader>dc",
         function()
           require("dap").continue()
         end,

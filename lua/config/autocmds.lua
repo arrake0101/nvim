@@ -20,6 +20,32 @@ local function set_cursor_highlight()
 end
 
 local cursor_group = vim.api.nvim_create_augroup("adaptive_cursor_highlight", { clear = true })
+-- local autosave_group = vim.api.nvim_create_augroup("lazyvim_autosave", { clear = true })
+--
+-- local function save_buffer()
+--   local bufnr = vim.api.nvim_get_current_buf()
+--   if not vim.api.nvim_buf_is_valid(bufnr) then
+--     return
+--   end
+--
+--   if vim.bo[bufnr].buftype ~= "" then
+--     return
+--   end
+--
+--   if not vim.bo[bufnr].modifiable or vim.bo[bufnr].readonly then
+--     return
+--   end
+--
+--   if vim.api.nvim_buf_get_name(bufnr) == "" or not vim.bo[bufnr].modified then
+--     return
+--   end
+--
+--   vim.cmd("silent update")
+-- end
+-- vim.api.nvim_create_autocmd({ "InsertLeave", "FocusLost" }, {
+--   group = autosave_group,
+--   callback = save_buffer,
+-- })
 
 vim.api.nvim_create_autocmd({ "VimEnter", "ColorScheme" }, {
   group = cursor_group,
