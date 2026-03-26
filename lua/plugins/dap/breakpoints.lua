@@ -41,7 +41,7 @@ return {
         desc = "Log Point",
       },
       {
-        "<leader>dq",
+        "<leader>dp",
         function()
           breakpoint_actions.open_picker()
         end,

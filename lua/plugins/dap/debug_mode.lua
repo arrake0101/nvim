@@ -68,17 +68,17 @@ local mode_maps = {
     end,
   },
   {
-    lhs = "u",
-    desc = "Debug UI",
-    rhs = function()
-      require("dapui").toggle({})
-    end,
-  },
-  {
     lhs = "x",
     desc = "Debug Terminate",
     rhs = function()
       require("dap").terminate()
+    end,
+  },
+  {
+    lhs = "C",
+    desc = "Run to Cursor",
+    rhs = function()
+      require("dap").run_to_cursor()
     end,
   },
 }
@@ -280,9 +280,7 @@ function M.setup(dap)
 
   dap.listeners.after.event_initialized["dap_debug_mode"] = function(session)
     vim.schedule(function()
-      local bufnr = session
-        and session.config
-        and session.config.__dap_debug_mode_bufnr
+      local bufnr = session and session.config and session.config.__dap_debug_mode_bufnr
         or resolve_target_bufnr({ bufnr = vim.api.nvim_get_current_buf() })
 
       if bufnr then
