@@ -419,6 +419,10 @@ local function open_chat_with_adapter(adapter)
   end
 end
 
+local function open_new_chat()
+  require("codecompanion").chat()
+end
+
 return {
   {
     "olimorris/codecompanion.nvim",
@@ -511,6 +515,12 @@ return {
         open_chat_with_adapter("copilot"),
         mode = { "n" },
         desc = "CodeCompanion Copilot Chat",
+      },
+      {
+        "<leader>an",
+        open_new_chat,
+        mode = { "n" },
+        desc = "CodeCompanion New Chat",
       },
       {
         "<leader>ak",
