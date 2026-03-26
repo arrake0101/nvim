@@ -7,6 +7,17 @@ return {
         scroll_down = "<C-e>",
         scroll_up = "<C-u>",
       })
+      opts.triggers = {
+        { "<auto>", mode = "nxso" },
+        -- `t` and `q` are built-in normal-mode keys, so which-key won't
+        -- create popup triggers for them automatically.
+        { "t", mode = "n" },
+        { "q", mode = "n" },
+      }
+      opts.spec = vim.list_extend(opts.spec or {}, {
+        { "t", group = "tabs/buffers", mode = "n" },
+        { "q", group = "quit", mode = "n" },
+      })
     end,
   },
   {
