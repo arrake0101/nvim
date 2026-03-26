@@ -1,3 +1,8 @@
+local settings = {
+  -- Flip this to false when you want Lazy.nvim to skip loading Copilot entirely.
+  enabled = true,
+}
+
 local function copy_to_clipboard(value)
   pcall(vim.fn.setreg, "+", value)
   pcall(vim.fn.setreg, "*", value)
@@ -151,6 +156,8 @@ end
 return {
   {
     "zbirenbaum/copilot.lua",
+    optional = true,
+    enabled = settings.enabled,
     opts = function(_, opts)
       opts = opts or {}
       opts.panel = opts.panel or {}
