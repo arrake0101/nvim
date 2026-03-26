@@ -5,6 +5,7 @@ local specs = {}
 
 -- Core behavior and shared keymaps always load together.
 vim.list_extend(specs, require("plugins.dap.mason"))
+vim.list_extend(specs, require("plugins.dap.breakpoints"))
 vim.list_extend(specs, require("plugins.dap.core"))
 vim.list_extend(specs, require("plugins.dap.ui"))
 

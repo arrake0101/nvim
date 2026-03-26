@@ -1,5 +1,4 @@
 -- UI-only configuration stays in this file so adapter files can focus on debugger setup.
-local motions = require("config.colemak").motions
 
 return {
   {
@@ -13,9 +12,9 @@ return {
     },
     keys = {
       { "<leader>de", false },
-      { "<leader>du", false },
+      { "<leader>dU", false },
       {
-        "<leader>d" .. string.upper(motions.down),
+        "<leader>dE",
         function()
           require("dapui").eval()
         end,
@@ -23,7 +22,7 @@ return {
         mode = { "n", "x" },
       },
       {
-        "<leader>d" .. string.upper(motions.up),
+        "<leader>du",
         function()
           require("dapui").toggle({})
         end,
@@ -36,9 +35,9 @@ return {
       -- These mappings only change the DAP UI windows.
       -- They keep the navigation semantics aligned with your Colemak movement layer.
       opts.mappings = vim.tbl_deep_extend("force", opts.mappings or {}, {
-        expand = { motions.right, "<CR>", "<2-LeftMouse>" },
-        open = motions.right,
-        edit = string.upper(motions.right),
+        expand = { "i", "<CR>", "<2-LeftMouse>" },
+        open = "i",
+        edit = "I",
         repl = "r",
         remove = "d",
         toggle = "t",
