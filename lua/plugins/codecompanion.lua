@@ -1,6 +1,8 @@
 local settings = {
   -- Flip this to false when you want Lazy.nvim to skip loading CodeCompanion entirely.
   enabled = true,
+  -- Keep CodeCompanion's Codex/Copilot state in this Neovim app instead of ~/.codex and ~/.config.
+  isolate_from_global = true,
   default_adapter = "codex",
   codex_model = "gpt-5.4-mini",
   -- Supported by GPT-5.4 family in Codex: low | medium | high | xhigh
@@ -8,11 +10,146 @@ local settings = {
   codex_auth_method = "chatgpt",
 }
 
+local uv = vim.uv or vim.loop
+
+local function join_paths(...)
+  return table.concat({ ... }, "/")
+end
+
+local function ensure_dir(path)
+  if uv.fs_stat(path) then
+    return
+  end
+
+  vim.fn.mkdir(path, "p")
+end
+
+local function copy_file_if_missing(src, dst)
+  if not uv.fs_stat(src) or uv.fs_stat(dst) then
+    return
+  end
+
+  ensure_dir(vim.fn.fnamemodify(dst, ":h"))
+
+  local ok, err = pcall(uv.fs_copyfile, src, dst)
+  if not ok then
+    vim.notify(
+      "CodeCompanion failed to bootstrap isolated state from " .. src .. ": " .. tostring(err),
+      vim.log.levels.WARN
+    )
+  end
+end
+
+local function ensure_symlink(src, dst)
+  if not uv.fs_stat(src) then
+    return
+  end
+
+  ensure_dir(vim.fn.fnamemodify(dst, ":h"))
+
+  local existing = uv.fs_lstat(dst)
+  if existing then
+    if existing.type == "link" then
+      local current_target = uv.fs_readlink(dst)
+      if current_target == src then
+        return
+      end
+    end
+
+    local ok_unlink, unlink_err = pcall(uv.fs_unlink, dst)
+    if not ok_unlink then
+      vim.notify(
+        "CodeCompanion failed to replace " .. dst .. " with a symlink: " .. tostring(unlink_err),
+        vim.log.levels.WARN
+      )
+      return
+    end
+  end
+
+  local ok_link, link_err = pcall(uv.fs_symlink, src, dst)
+  if not ok_link then
+    vim.notify(
+      "CodeCompanion failed to link " .. dst .. " -> " .. src .. ": " .. tostring(link_err),
+      vim.log.levels.WARN
+    )
+  end
+end
+
+local function copy_tree_if_missing(src, dst)
+  if not uv.fs_stat(src) then
+    return
+  end
+
+  ensure_dir(dst)
+
+  for name, kind in vim.fs.dir(src) do
+    local src_path = join_paths(src, name)
+    local dst_path = join_paths(dst, name)
+
+    if kind == "directory" then
+      copy_tree_if_missing(src_path, dst_path)
+    elseif kind == "file" then
+      copy_file_if_missing(src_path, dst_path)
+    end
+  end
+end
+
+local function codecompanion_root()
+  return join_paths(vim.fn.stdpath("config"), ".local", "codecompanion")
+end
+
+local function codecompanion_token_path()
+  if settings.isolate_from_global then
+    return join_paths(codecompanion_root(), "tokens")
+  end
+
+  return vim.fn.expand("~/.config")
+end
+
 local function codex_home()
+  if settings.isolate_from_global then
+    return join_paths(codecompanion_root(), "codex")
+  end
+
   if vim.env.CODEX_HOME and vim.env.CODEX_HOME ~= "" then
     return vim.env.CODEX_HOME
   end
-  return (vim.env.HOME or "") .. "/.codex"
+
+  return join_paths(vim.env.HOME or "", ".codex")
+end
+
+local function bootstrap_isolated_state()
+  if not settings.isolate_from_global then
+    return
+  end
+
+  local home = vim.env.HOME or ""
+  local token_path = codecompanion_token_path()
+  local codex_path = codex_home()
+
+  ensure_dir(codecompanion_root())
+  ensure_dir(token_path)
+  ensure_dir(codex_path)
+  ensure_dir(join_paths(codex_path, "sessions"))
+  ensure_dir(join_paths(codex_path, "archived_sessions"))
+
+  -- Reuse existing sign-in state on first boot without pulling over global chat history.
+  copy_tree_if_missing(join_paths(home, ".config", "github-copilot"), join_paths(token_path, "github-copilot"))
+  ensure_symlink(join_paths(home, ".codex", "auth.json"), join_paths(codex_path, "auth.json"))
+
+  for _, file in ipairs({
+    "config.toml",
+    "config.json",
+    "AGENTS.md",
+    "instructions.md",
+  }) do
+    copy_file_if_missing(join_paths(home, ".codex", file), join_paths(codex_path, file))
+  end
+
+  copy_tree_if_missing(join_paths(home, ".codex", "rules"), join_paths(codex_path, "rules"))
+
+  vim.env.CODECOMPANION_TOKEN_PATH = token_path
+  vim.env.CODEX_HOME = codex_path
 end
 
 local function cached_codex_acp()
@@ -293,7 +430,8 @@ return {
       "CodeCompanionCmd",
     },
     init = function()
-      vim.env.CODECOMPANION_TOKEN_PATH = vim.fn.expand("~/.config")
+      bootstrap_isolated_state()
+      vim.env.CODECOMPANION_TOKEN_PATH = codecompanion_token_path()
     end,
     dependencies = {
       "nvim-lua/plenary.nvim",
