@@ -73,6 +73,166 @@ local function interaction_adapter(adapter)
   return adapter
 end
 
+local function resolve_history_adapter()
+  local ok, codecompanion = pcall(require, "codecompanion")
+  if ok then
+    local chat = codecompanion.last_chat()
+    if chat and chat.adapter and chat.adapter.type == "acp" then
+      return chat.adapter
+    end
+  end
+
+  local adapters = require("codecompanion.adapters")
+  local adapter = adapters.resolve(interaction_adapter(settings.default_adapter))
+  if adapter and adapter.type == "acp" then
+    return adapter
+  end
+
+  return adapters.resolve(interaction_adapter("codex"))
+end
+
+local function format_history_label(session)
+  local utils = require("codecompanion.utils")
+  local parts = {}
+  local title = session.title and session.title ~= "" and session.title or session.sessionId
+
+  if session.updatedAt then
+    local ts = utils.parse_iso8601(session.updatedAt)
+    if ts then
+      table.insert(parts, "(" .. utils.make_relative(ts) .. ")")
+    end
+  end
+
+  table.insert(parts, title)
+
+  return table.concat(parts, " ")
+end
+
+local function format_history_preview(session)
+  local title = session.title and session.title ~= "" and session.title or "Untitled Session"
+  local lines = {
+    "# " .. title,
+    "",
+    "- Session ID: `" .. session.sessionId .. "`",
+  }
+
+  if session.updatedAt then
+    table.insert(lines, "- Updated At: `" .. session.updatedAt .. "`")
+  end
+
+  if session.cwd and session.cwd ~= "" then
+    table.insert(lines, "- Working Dir: `" .. session.cwd .. "`")
+  end
+
+  return table.concat(lines, "\n")
+end
+
+local function open_history_picker()
+  local ok, Snacks = pcall(require, "snacks")
+  if not ok then
+    vim.notify("CodeCompanion history picker requires snacks.nvim", vim.log.levels.ERROR)
+    return
+  end
+
+  local utils = require("codecompanion.utils")
+  local adapter = resolve_history_adapter()
+  if not adapter or adapter.type ~= "acp" then
+    utils.notify("History picker requires an ACP adapter such as Codex", vim.log.levels.WARN)
+    return
+  end
+
+  local connection = require("codecompanion.acp").new({ adapter = adapter })
+  if not connection:connect_and_authenticate() then
+    utils.notify("Failed to connect to the ACP adapter", vim.log.levels.ERROR)
+    return
+  end
+
+  if not connection:can_list_sessions() or not connection:can_load_session() then
+    connection:disconnect()
+    utils.notify("This ACP adapter does not support restoring session history", vim.log.levels.WARN)
+    return
+  end
+
+  local sessions = connection:session_list({ max_sessions = 500 })
+  if #sessions == 0 then
+    connection:disconnect()
+    utils.notify("No previous AI sessions found", vim.log.levels.INFO)
+    return
+  end
+
+  local selected = false
+  local items = vim.tbl_map(function(session)
+    return {
+      text = format_history_label(session),
+      item = session,
+      preview = {
+        text = format_history_preview(session),
+        ft = "markdown",
+      },
+    }
+  end, sessions)
+
+  Snacks.picker({
+    items = items,
+    title = "CodeCompanion History",
+    preview = "preview",
+    confirm = function(picker, item)
+      if not item or not item.item then
+        return
+      end
+
+      selected = true
+      picker:close()
+
+      local session = item.item
+      local title = session.title and session.title ~= "" and session.title or session.sessionId
+      local Chat = require("codecompanion.interactions.chat")
+      local chat = Chat.new({
+        hidden = true,
+        title = title,
+        adapter = adapter,
+        buffer_context = {
+          bufnr = vim.api.nvim_get_current_buf(),
+        },
+      })
+      chat.acp_connection = connection
+
+      local updates = {}
+      local ok_load = connection:load_session(session.sessionId, {
+        on_session_update = function(update)
+          table.insert(updates, update)
+        end,
+      })
+
+      if not ok_load then
+        connection:disconnect()
+        chat:close()
+        utils.notify("Failed to load the selected AI session", vim.log.levels.ERROR)
+        return
+      end
+
+      require("codecompanion.interactions.chat.acp.commands").link_buffer_to_session(chat.bufnr, connection.session_id)
+      require("codecompanion.interactions.chat.acp.render").restore_session(chat, updates)
+
+      if title and title ~= "" then
+        chat:set_title(title)
+      end
+
+      Chat.close_last_chat()
+      require("codecompanion").restore(chat.bufnr)
+      utils.notify("Resumed session: " .. title)
+    end,
+    on_close = function()
+      if not selected then
+        connection:disconnect()
+      end
+    end,
+    format = function(item)
+      return { { item.text } }
+    end,
+  })
+end
+
 local function run_visual_prompt(prompt)
   return function()
     vim.cmd("'<,'>CodeCompanion " .. escape_prompt(prompt))
@@ -259,6 +419,12 @@ return {
         "<cmd>CodeCompanionCmd<cr>",
         mode = { "n" },
         desc = "CodeCompanion Command",
+      },
+      {
+        "<leader>ah",
+        open_history_picker,
+        mode = { "n" },
+        desc = "CodeCompanion History",
       },
     },
   },
