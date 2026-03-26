@@ -1,3 +1,13 @@
+local settings = {
+  -- Flip this to false when you want Lazy.nvim to skip loading CodeCompanion entirely.
+  enabled = true,
+  default_adapter = "codex",
+  codex_model = "gpt-5.4-mini",
+  -- Supported by GPT-5.4 family in Codex: low | medium | high | xhigh
+  codex_reasoning_effort = "xhigh",
+  codex_auth_method = "chatgpt",
+}
+
 local function codex_home()
   if vim.env.CODEX_HOME and vim.env.CODEX_HOME ~= "" then
     return vim.env.CODEX_HOME
@@ -32,8 +42,35 @@ local function codex_command()
   return nil
 end
 
+local function codex_command_args()
+  local command = codex_command()
+  if not command then
+    return nil
+  end
+
+  local args = { command }
+
+  if settings.codex_reasoning_effort and settings.codex_reasoning_effort ~= "" then
+    table.insert(args, "-c")
+    table.insert(args, string.format('model_reasoning_effort="%s"', settings.codex_reasoning_effort))
+  end
+
+  return args
+end
+
 local function escape_prompt(prompt)
   return vim.fn.escape((prompt or ""):gsub("[%r\n]+", " "), [[\|]])
+end
+
+local function interaction_adapter(adapter)
+  if adapter == "codex" then
+    return {
+      name = "codex",
+      model = settings.codex_model,
+    }
+  end
+
+  return adapter
 end
 
 local function run_visual_prompt(prompt)
@@ -88,6 +125,7 @@ end
 return {
   {
     "olimorris/codecompanion.nvim",
+    enabled = settings.enabled,
     cmd = {
       "CodeCompanion",
       "CodeCompanionActions",
@@ -103,7 +141,7 @@ return {
       "zbirenbaum/copilot.lua",
     },
     opts = function()
-      local codex_acp = codex_command()
+      local codex_acp = codex_command_args()
 
       return {
         adapters = {
@@ -122,10 +160,11 @@ return {
             codex = function()
               return require("codecompanion.adapters").extend("codex", {
                 commands = codex_acp and {
-                  default = { codex_acp },
+                  default = codex_acp,
                 } or nil,
                 defaults = {
-                  auth_method = "chatgpt",
+                  auth_method = settings.codex_auth_method,
+                  model = settings.codex_model,
                 },
                 env = {
                   HOME = vim.env.HOME,
@@ -140,13 +179,13 @@ return {
         },
         interactions = {
           chat = {
-            adapter = "copilot",
+            adapter = interaction_adapter(settings.default_adapter),
           },
           inline = {
-            adapter = "copilot",
+            adapter = interaction_adapter(settings.default_adapter),
           },
           cmd = {
-            adapter = "copilot",
+            adapter = interaction_adapter(settings.default_adapter),
           },
         },
         display = {
