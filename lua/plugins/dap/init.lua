@@ -7,6 +7,7 @@ local specs = {}
 vim.list_extend(specs, require("plugins.dap.mason"))
 vim.list_extend(specs, require("plugins.dap.breakpoints"))
 vim.list_extend(specs, require("plugins.dap.core"))
+vim.list_extend(specs, require("plugins.dap.statusline"))
 vim.list_extend(specs, require("plugins.dap.ui"))
 
 return specs

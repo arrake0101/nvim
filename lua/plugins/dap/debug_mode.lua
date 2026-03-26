@@ -14,6 +14,7 @@ local mode_maps = {
   {
     lhs = "c",
     desc = "Debug Continue",
+    help = "continue",
     rhs = function()
       require("dap").continue()
     end,
@@ -21,6 +22,7 @@ local mode_maps = {
   {
     lhs = "r",
     desc = "Debug Step Over",
+    help = "step over",
     rhs = function()
       require("dap").step_over()
     end,
@@ -28,6 +30,7 @@ local mode_maps = {
   {
     lhs = "a",
     desc = "Debug Step Into",
+    help = "step into",
     rhs = function()
       require("dap").step_into()
     end,
@@ -35,6 +38,7 @@ local mode_maps = {
   {
     lhs = "t",
     desc = "Debug Step Out",
+    help = "step out",
     rhs = function()
       require("dap").step_out()
     end,
@@ -42,6 +46,7 @@ local mode_maps = {
   {
     lhs = "b",
     desc = "Debug Breakpoint",
+    help = "toggle breakpoint",
     rhs = function()
       breakpoint_actions.api().toggle_breakpoint()
     end,
@@ -49,6 +54,7 @@ local mode_maps = {
   {
     lhs = "B",
     desc = "Debug Conditional Breakpoint",
+    help = "conditional breakpoint",
     rhs = function()
       breakpoint_actions.api().set_conditional_breakpoint()
     end,
@@ -56,6 +62,7 @@ local mode_maps = {
   {
     lhs = "m",
     desc = "Debug Log Point",
+    help = "log point",
     rhs = function()
       breakpoint_actions.api().set_log_point()
     end,
@@ -63,6 +70,7 @@ local mode_maps = {
   {
     lhs = "p",
     desc = "Debug Breakpoints Picker",
+    help = "breakpoints picker",
     rhs = function()
       breakpoint_actions.open_picker()
     end,
@@ -70,6 +78,7 @@ local mode_maps = {
   {
     lhs = "x",
     desc = "Debug Terminate",
+    help = "terminate",
     rhs = function()
       require("dap").terminate()
     end,
@@ -77,6 +86,7 @@ local mode_maps = {
   {
     lhs = "C",
     desc = "Run to Cursor",
+    help = "run to cursor",
     rhs = function()
       require("dap").run_to_cursor()
     end,
@@ -144,21 +154,24 @@ local function restore_buffer_map(bufnr, map)
   })
 end
 
+local function refresh_statusline()
+  local ok, lualine = pcall(require, "lualine")
+  if ok then
+    lualine.refresh({ place = { "statusline" } })
+  end
+end
+
 local function hint_lines()
-  return table.concat({
-    "Debug Mode",
-    "c continue",
-    "r step over",
-    "a step into",
-    "t step out",
-    "b breakpoint",
-    "B conditional breakpoint",
-    "m log point",
-    "p breakpoints picker",
-    "u toggle ui",
-    "x terminate",
-    "q / <Esc> exit",
-  }, "\n")
+  local lines = { "Debug Mode" }
+
+  -- Build the help text from the real key table so the popup never drifts
+  -- out of sync when we add, remove, or rename a debug-mode mapping.
+  for _, map in ipairs(mode_maps) do
+    table.insert(lines, string.format("%s %s", map.lhs, map.help or map.desc))
+  end
+
+  table.insert(lines, "q / <Esc> exit")
+  return table.concat(lines, "\n")
 end
 
 function M.exit(opts)
@@ -188,6 +201,7 @@ function M.exit(opts)
   state.active = false
   state.bufnr = nil
   state.saved_maps = {}
+  refresh_statusline()
 
   if opts.notify then
     vim.notify("Debug mode off", vim.log.levels.INFO, { title = "DAP" })
@@ -255,6 +269,7 @@ function M.enter(opts)
   })
 
   vim.b[bufnr].dap_debug_mode = true
+  refresh_statusline()
 
   vim.api.nvim_create_augroup(group_name, { clear = true })
   vim.api.nvim_create_autocmd({ "BufLeave", "BufHidden", "BufWipeout" }, {

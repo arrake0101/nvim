@@ -84,7 +84,7 @@ return {
     },
     keys = vim.list_extend({
       {
-        "<leader>dc",
+        "<leader>dr",
         function()
           require("dap").continue()
         end,
@@ -154,7 +154,7 @@ return {
         desc = "Pause",
       },
       {
-        "<leader>dr",
+        "<leader>dt",
         function()
           require("dap").repl.toggle()
         end,
@@ -168,7 +168,7 @@ return {
         desc = "Session",
       },
       {
-        "<leader>dt",
+        "<leader>dx",
         function()
           require("dap").terminate()
         end,
