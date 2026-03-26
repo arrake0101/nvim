@@ -35,6 +35,15 @@
 
 这会恢复任务列表项的渲染，而不是完全按普通文本显示。
 
+### Markdown 本地链接跳转
+
+- 在 `markdown` / `markdown.mdx` 缓冲区里，把 `gx` 改成优先解析本地链接
+- 支持普通 Markdown 链接：`[text](./note.md)`
+- 支持标题锚点：`[text](./note.md#section)`
+- 兼容常见 wiki link：`[[note]]` / `[[note#section|alias]]`
+
+如果目标是本地文件，会直接在当前 Neovim 窗口里打开，而不是交给系统默认应用；只有远程链接还会继续走系统浏览器。
+
 ## 为什么要这样改
 
 你参考的 `/Users/arrake/.config/ilovevim_config` 基本没有主动改 `render-markdown.nvim` 的样式，只是启用了它。
@@ -51,3 +60,4 @@
 
 - 浏览器预览仍然沿用 `markdown-preview.nvim` 的默认行为。
 - 编辑器内 Markdown 外观则优先贴近你参考配置的默认体验。
+- 本地文件链接会优先在编辑器内部打开，Markdown 标题锚点也会直接在 Neovim 里跳转，减少在系统应用和 Neovim 之间来回切换。

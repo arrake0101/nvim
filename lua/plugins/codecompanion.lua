@@ -3,6 +3,8 @@ local settings = {
   enabled = true,
   -- Keep CodeCompanion's Codex/Copilot state in this Neovim app instead of ~/.codex and ~/.config.
   isolate_from_global = true,
+  -- Share one history across projects/directories inside this Neovim app.
+  share_history_across_projects = true,
   default_adapter = "codex",
   codex_model = "gpt-5.4-mini",
   -- Supported by GPT-5.4 family in Codex: low | medium | high | xhigh
@@ -246,6 +248,10 @@ local function format_history_label(session)
 end
 
 local function format_history_preview(session)
+  if session.preview and session.preview ~= "" then
+    return session.preview
+  end
+
   local title = session.title and session.title ~= "" and session.title or "Untitled Session"
   local lines = {
     "# " .. title,
@@ -262,6 +268,221 @@ local function format_history_preview(session)
   end
 
   return table.concat(lines, "\n")
+end
+
+local function format_timestamp(sec)
+  if not sec then
+    return nil
+  end
+
+  return os.date("!%Y-%m-%dT%H:%M:%SZ", sec)
+end
+
+local function collect_session_files(root, acc)
+  if not uv.fs_stat(root) then
+    return acc
+  end
+
+  for name, kind in vim.fs.dir(root) do
+    local path = join_paths(root, name)
+
+    if kind == "directory" then
+      collect_session_files(path, acc)
+    elseif kind == "file" and path:sub(-6) == ".jsonl" then
+      table.insert(acc, path)
+    end
+  end
+
+  return acc
+end
+
+local function trim_preview_text(text, max_chars)
+  text = vim.trim((text or ""):gsub("\r", ""))
+  text = text:gsub("\n\n\n+", "\n\n")
+
+  if text == "" then
+    return ""
+  end
+
+  if vim.fn.strchars(text) > max_chars then
+    return vim.fn.strcharpart(text, 0, max_chars) .. "..."
+  end
+
+  return text
+end
+
+local function extract_visible_messages(lines)
+  local messages = {}
+  local saw_event_messages = false
+
+  for _, line in ipairs(lines or {}) do
+    if line ~= "" then
+      local ok, event = pcall(vim.json.decode, line)
+      if ok and event and event.payload then
+        if event.type == "event_msg" then
+          local kind
+          local text
+
+          if event.payload.type == "user_message" then
+            kind = "user"
+            text = event.payload.message
+          elseif event.payload.type == "agent_message" then
+            kind = "assistant"
+            text = event.payload.message
+          end
+
+          text = trim_preview_text(text, 400)
+          if kind and text ~= "" then
+            saw_event_messages = true
+            table.insert(messages, {
+              kind = kind,
+              text = text,
+            })
+          end
+        end
+      end
+    end
+  end
+
+  if saw_event_messages then
+    return messages
+  end
+
+  for _, line in ipairs(lines or {}) do
+    if line ~= "" then
+      local ok, event = pcall(vim.json.decode, line)
+      if ok and event and event.type == "response_item" and event.payload and event.payload.type == "message" then
+        local role = event.payload.role
+        if role == "user" or role == "assistant" then
+          local chunks = {}
+          for _, item in ipairs(event.payload.content or {}) do
+            if item.type == "input_text" then
+              table.insert(chunks, item.text or "")
+            elseif item.type == "output_text" then
+              table.insert(chunks, item.text or "")
+            end
+          end
+
+          local text = trim_preview_text(table.concat(chunks, "\n\n"), 400)
+          if text ~= "" then
+            table.insert(messages, {
+              kind = role,
+              text = text,
+            })
+          end
+        end
+      end
+    end
+  end
+
+  return messages
+end
+
+local function session_title_from_messages(messages)
+  for _, message in ipairs(messages or {}) do
+    if message.kind == "user" then
+      return vim.fn.strcharpart(message.text, 0, 80)
+    end
+  end
+end
+
+local function session_preview_from_messages(messages)
+  if not messages or #messages == 0 then
+    return nil
+  end
+
+  local lines = {}
+  local start = math.max(1, #messages - 5)
+
+  if start > 1 then
+    table.insert(lines, "...")
+    table.insert(lines, "")
+  end
+
+  for i = start, #messages do
+    local message = messages[i]
+    local role = message.kind == "user" and "User" or "Assistant"
+    table.insert(lines, "### " .. role)
+    table.insert(lines, "")
+    table.insert(lines, trim_preview_text(message.text, 320))
+    table.insert(lines, "")
+  end
+
+  return vim.trim(table.concat(lines, "\n"))
+end
+
+local function session_from_file(path)
+  local lines = vim.fn.readfile(path)
+  local first_line = lines[1]
+  if not first_line or first_line == "" then
+    return nil
+  end
+
+  local ok, first_event = pcall(vim.json.decode, first_line)
+  if not ok or not first_event or first_event.type ~= "session_meta" or not first_event.payload then
+    return nil
+  end
+
+  local stat = uv.fs_stat(path)
+  local payload = first_event.payload
+  local messages = extract_visible_messages(lines)
+  local title = session_title_from_messages(messages)
+
+  return {
+    sessionId = payload.id,
+    title = title,
+    cwd = payload.cwd,
+    updatedAt = format_timestamp(stat and stat.mtime and stat.mtime.sec),
+    preview = session_preview_from_messages(messages),
+  }
+end
+
+local function list_stored_sessions(opts)
+  opts = opts or {}
+
+  local sessions = {}
+  local files = collect_session_files(join_paths(codex_home(), "sessions"), {})
+
+  for _, path in ipairs(files) do
+    local session = session_from_file(path)
+    if session and session.sessionId then
+      table.insert(sessions, session)
+    end
+  end
+
+  table.sort(sessions, function(a, b)
+    return (a.updatedAt or "") > (b.updatedAt or "")
+  end)
+
+  local max_sessions = opts.max_sessions or 500
+  if #sessions > max_sessions then
+    return vim.list_slice(sessions, 1, max_sessions)
+  end
+
+  return sessions
+end
+
+local function patch_acp_session_history()
+  if not settings.share_history_across_projects then
+    return
+  end
+
+  local ok, Connection = pcall(require, "codecompanion.acp")
+  if not ok or Connection._shared_history_patch_applied then
+    return
+  end
+
+  local original_session_list = Connection.session_list
+
+  Connection.session_list = function(self, opts)
+    if self.adapter and self.adapter.name == "codex" then
+      return list_stored_sessions(opts)
+    end
+
+    return original_session_list(self, opts)
+  end
+
+  Connection._shared_history_patch_applied = true
 end
 
 local function open_history_picker()
@@ -444,6 +665,7 @@ return {
     },
     opts = function()
       local codex_acp = codex_command_args()
+      patch_acp_session_history()
 
       return {
         adapters = {

@@ -1,7 +1,19 @@
+local markdown_links = require("config.markdown_links")
+
 return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
     optional = true,
+    keys = {
+      {
+        "gl",
+        function()
+          markdown_links.open_under_cursor()
+        end,
+        -- ft = { "markdown", "markdown.mdx" },
+        desc = "Open Markdown Link",
+      },
+    },
     opts = function(_, opts)
       opts = opts or {}
 

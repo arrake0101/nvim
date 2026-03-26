@@ -71,3 +71,7 @@ WRN 2026-03-27T00:59:45.818 ?.92253    server_start:193: Failed to start server:
 WRN 2026-03-27T01:02:10.676 ?.95133    server_start:193: Failed to start server: operation not permitted: /var/folders/nx/vtsmp50s3158ql6qryt742r40000gn/T/nvim.arrake/9u8sx2/nvim_test.95133.0
 WRN 2026-03-27T01:09:44.100 ?.3933     server_start:193: Failed to start server: operation not permitted: /var/folders/nx/vtsmp50s3158ql6qryt742r40000gn/T/nvim.arrake/bWDqZz/nvim_test.3933.0
 WRN 2026-03-27T01:09:44.103 ?.3935     server_start:193: Failed to start server: operation not permitted: /var/folders/nx/vtsmp50s3158ql6qryt742r40000gn/T/nvim.arrake/eu28qR/nvim_test.3935.0
+WRN 2026-03-27T05:20:14.521 ?.64116    server_start:193: Failed to start server: operation not permitted: /var/folders/nx/vtsmp50s3158ql6qryt742r40000gn/T/nvim.arrake/oWA1Lg/nvim.64116.0
+WRN 2026-03-27T05:20:14.521 ?.64115    server_start:193: Failed to start server: operation not permitted: /var/folders/nx/vtsmp50s3158ql6qryt742r40000gn/T/nvim.arrake/9ihFQd/nvim.64115.0
+WRN 2026-03-27T05:20:14.522 ?.64117    server_start:193: Failed to start server: operation not permitted: /var/folders/nx/vtsmp50s3158ql6qryt742r40000gn/T/nvim.arrake/r2EWzg/nvim.64117.0
+WRN 2026-03-27T05:21:35.521 ?.66597    server_start:193: Failed to start server: operation not permitted: /var/folders/nx/vtsmp50s3158ql6qryt742r40000gn/T/nvim.arrake/00d0Mx/nvim.66597.0
