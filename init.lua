@@ -1,10 +1,15 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
+vim.g.have_nerd_font = true
 
 -- Use an isolated npm cache for tools installed from Neovim plugins like Mason.
 -- This avoids permission issues when the user's global npm cache was previously
 -- written by another account (for example via sudo).
 vim.env.NPM_CONFIG_CACHE = vim.fn.stdpath("cache") .. "/npm"
+
+if vim.loader then
+  vim.loader.enable()
+end
 
 -- bootstrap lazy.nvim, LazyVim and your plugins
 
