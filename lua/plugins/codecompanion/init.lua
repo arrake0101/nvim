@@ -3,6 +3,7 @@ local storage = require("plugins.codecompanion.storage")
 local adapters = require("plugins.codecompanion.adapters")
 local history = require("plugins.codecompanion.history")
 local chat_input = require("plugins.codecompanion.chat_input")
+local chat_buffer = require("plugins.codecompanion.chat_buffer")
 
 return {
   {
@@ -26,6 +27,7 @@ return {
     opts = function()
       local codex_acp = adapters.codex_command_args()
       history.patch_acp_session_history()
+      chat_buffer.setup()
 
       return {
         adapters = {
@@ -58,6 +60,7 @@ return {
         interactions = {
           chat = {
             adapter = adapters.interaction_adapter(settings.default_adapter),
+            keymaps = chat_buffer.chat_keymaps(),
           },
           inline = {
             adapter = adapters.interaction_adapter(settings.default_adapter),

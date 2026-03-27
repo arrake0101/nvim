@@ -1,17 +1,27 @@
-class NumberRunner:
-    def __init__(self, numbers):
-        self.numbers = numbers
-        self.total = 0
+from dataclasses import dataclass
+from typing import Optional, Sequence, TypedDict
 
-    def run(self):
+
+class Summary(TypedDict):
+    sum: float
+    average: Optional[float]
+    status: str
+
+
+@dataclass
+class NumberRunner:
+    numbers: Sequence[int]
+
+    @staticmethod
+    def _label_for(doubled: int) -> str:
+        return "multiple-of-4" if doubled % 4 == 0 else "other"
+
+    def run(self) -> int:
+        total = 0
         for index, value in enumerate(self.numbers, start=1):
             doubled = value * 2
-            self.total = self.total + doubled
-
-            if doubled % 4 == 0:
-                label = "multiple-of-4"
-            else:
-                label = "other"
+            total += doubled
+            label = self._label_for(doubled)
 
             print(
                 "loop",
@@ -23,20 +33,19 @@ class NumberRunner:
                 "label",
                 label,
                 "total",
-                self.total,
+                total,
             )
 
-        return self.total
+        return total
 
 
-def safe_divide(left, right):
-    try:
-        return left / right
-    except ZeroDivisionError:
+def safe_divide(left: float, right: float) -> Optional[float]:
+    if right == 0:
         return None
+    return left / right
 
 
-def summarize(total, count):
+def summarize(total: float, count: int) -> Summary:
     average = safe_divide(total, count)
 
     if average is None:
@@ -53,10 +62,9 @@ def summarize(total, count):
     }
 
 
-def main():
+def main() -> None:
     numbers = [1, 2, 3, 4]
-    runner = NumberRunner(numbers)
-    total = runner.run()
+    total = NumberRunner(numbers).run()
 
     result = summarize(total, len(numbers))
     print("summary", result)
@@ -67,4 +75,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
