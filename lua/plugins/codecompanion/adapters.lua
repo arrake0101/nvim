@@ -1,51 +1,22 @@
 local settings = require("plugins.codecompanion.settings")
 local storage = require("plugins.codecompanion.storage")
+local codex_acp = require("plugins.codex.acp")
 
 local M = {}
 
-local function cached_codex_acp()
-  local home = vim.env.HOME or ""
-  local patterns = {
-    home
-      .. "/.npm/_npx/*/node_modules/@zed-industries/codex-acp/node_modules/@zed-industries/codex-acp-*/bin/codex-acp",
-    home .. "/.npm/_npx/*/node_modules/@zed-industries/codex-acp-*/bin/codex-acp",
-  }
-
-  for _, pattern in ipairs(patterns) do
-    local matches = vim.fn.glob(pattern, false, true)
-    if #matches > 0 then
-      return matches[1]
-    end
-  end
-end
-
 function M.codex_command()
-  local cached = cached_codex_acp()
-  if cached and vim.fn.executable(cached) == 1 then
-    return cached
-  end
-
-  if vim.fn.executable("codex-acp") == 1 then
-    return "codex-acp"
-  end
-
-  return nil
+  return codex_acp.command()
 end
 
 function M.codex_command_args()
-  local command = M.codex_command()
-  if not command then
-    return nil
-  end
-
-  local args = { command }
+  local extra_args = {}
 
   if settings.codex_reasoning_effort and settings.codex_reasoning_effort ~= "" then
-    table.insert(args, "-c")
-    table.insert(args, string.format('model_reasoning_effort="%s"', settings.codex_reasoning_effort))
+    table.insert(extra_args, "-c")
+    table.insert(extra_args, string.format('model_reasoning_effort="%s"', settings.codex_reasoning_effort))
   end
 
-  return args
+  return codex_acp.argv(extra_args)
 end
 
 function M.interaction_adapter(adapter)

@@ -10,38 +10,19 @@ local settings = {
   window_width = "42%",
 }
 
+local uv = vim.uv or vim.loop
+local codex_acp = require("plugins.codex.acp")
+
+local function home_dir()
+  return uv.os_homedir() or vim.env.USERPROFILE or vim.env.HOME or ""
+end
+
 local function codex_home()
   if vim.env.CODEX_HOME and vim.env.CODEX_HOME ~= "" then
     return vim.env.CODEX_HOME
   end
-  return (vim.env.HOME or "") .. "/.codex"
-end
 
-local function cached_codex_acp()
-  local home = vim.env.HOME or ""
-  local patterns = {
-    home
-      .. "/.npm/_npx/*/node_modules/@zed-industries/codex-acp/node_modules/@zed-industries/codex-acp-*/bin/codex-acp",
-    home .. "/.npm/_npx/*/node_modules/@zed-industries/codex-acp-*/bin/codex-acp",
-  }
-
-  for _, pattern in ipairs(patterns) do
-    local matches = vim.fn.glob(pattern, false, true)
-    if #matches > 0 then
-      return matches[1]
-    end
-  end
-end
-
-local function codex_command()
-  local cached = cached_codex_acp()
-  if cached and vim.fn.executable(cached) == 1 then
-    return cached
-  end
-  if vim.fn.executable("codex-acp") == 1 then
-    return "codex-acp"
-  end
-  return "codex-acp"
+  return home_dir() .. "/.codex"
 end
 
 return {
@@ -49,33 +30,38 @@ return {
     "carlos-algms/agentic.nvim",
     enabled = settings.enabled,
     event = "VeryLazy",
-    opts = {
-      provider = "codex-acp",
-      acp_providers = {
-        ["codex-acp"] = {
-          command = codex_command(),
-          auth_method = settings.auth_method,
-          default_mode = settings.default_mode,
-          env = {
-            HOME = vim.env.HOME,
-            PATH = vim.env.PATH,
-            CODEX_HOME = codex_home(),
-            OPENAI_API_KEY = vim.env.OPENAI_API_KEY,
-            CODEX_API_KEY = vim.env.CODEX_API_KEY,
+    opts = function()
+      local resolved = codex_acp.resolve()
+
+      return {
+        provider = "codex-acp",
+        acp_providers = {
+          ["codex-acp"] = {
+            command = resolved and resolved.command or "codex-acp",
+            args = resolved and resolved.args or nil,
+            auth_method = settings.auth_method,
+            default_mode = settings.default_mode,
+            env = {
+              HOME = home_dir(),
+              PATH = vim.env.PATH,
+              CODEX_HOME = codex_home(),
+              OPENAI_API_KEY = vim.env.OPENAI_API_KEY,
+              CODEX_API_KEY = vim.env.CODEX_API_KEY,
+            },
           },
         },
-      },
-      auto_scroll = {
-        threshold = settings.auto_scroll_threshold,
-      },
-      diff_preview = {
-        enabled = settings.diff_preview,
-      },
-      windows = {
-        position = settings.window_position,
-        width = settings.window_width,
-      },
-    },
+        auto_scroll = {
+          threshold = settings.auto_scroll_threshold,
+        },
+        diff_preview = {
+          enabled = settings.diff_preview,
+        },
+        windows = {
+          position = settings.window_position,
+          width = settings.window_width,
+        },
+      }
+    end,
     keys = {
       {
         "<leader>aa",
