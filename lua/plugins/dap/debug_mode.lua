@@ -81,6 +81,7 @@ local mode_maps = {
     help = "terminate",
     rhs = function()
       require("dap").terminate()
+      require("dapui").close({})
     end,
   },
   {
