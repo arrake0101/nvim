@@ -75,6 +75,7 @@ return {
     dependencies = vim.list_extend({
       "rcarriga/nvim-dap-ui",
       "theHamsta/nvim-dap-virtual-text",
+      "mfussenegger/nvim-dap-python",
     }, adapter_dependencies()),
     cmd = {
       "DapContinue",
